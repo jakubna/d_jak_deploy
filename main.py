@@ -51,5 +51,5 @@ def receive_something(rq: GiveMeSomethingRq):
 @app.get("/patient/{pk}")
 async def read_item(pk: int):
     if pk not in app.database:
-        raise HTTPException(status_code=204)
+        raise HTTPException(status_code=204, detail="Patient not found")
     return app.database[pk]
