@@ -7,7 +7,7 @@ from pydantic import BaseModel
 
 app = FastAPI()
 
-app.counter = 0
+app.counter = -1
 app.database = {}
 
 @app.get("/")
@@ -51,5 +51,5 @@ def receive_something(rq: GiveMeSomethingRq):
 @app.get("/patient/{pk}")
 async def read_item(pk: int):
     if pk not in app.database:
-        raise HTTPException(status_code=404, detail="Item not found")
+        raise HTTPException(status_code=204, detail="no_content")
     return app.database[pk]
