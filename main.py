@@ -19,7 +19,7 @@ class GivePostMethodResp(BaseModel):
 
 class GiveMeSomethingRq(BaseModel):
 	name: str
-	surname: str
+	surename: str
 
 
 class GiveMeSomethingResp(BaseModel):
