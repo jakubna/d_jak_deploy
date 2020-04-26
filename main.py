@@ -12,7 +12,7 @@ app.database = {}
 
 @app.get("/")
 def root():
-	return {"message": "Hello World during the coronavirus pandemic!"}
+	return "hello"
 
 class GivePostMethodResp(BaseModel):
 	method: str
@@ -25,6 +25,10 @@ class GiveMeSomethingRq(BaseModel):
 class GiveMeSomethingResp(BaseModel):
 	id: int
 	patient: Dict
+
+@app.get("/welcome")
+def welcome():
+	return "hi"
 
 @app.get("/method")
 def method_get():
