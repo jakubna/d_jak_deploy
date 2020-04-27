@@ -58,20 +58,25 @@ def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
 	app.sessions[session_token]=credentials.username
 	return session_token
 
-@app.post("/login")
+def check_cookie(session_token: str = Cookie(None)):
+	if session_token not in app.sessions:
+		session_token = None
+	return session_token
+
+@app.get("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
 	response.status_code = status.HTTP_302_FOUND
 	response.headers["Location"] = "/welcome"
 	response.set_cookie(key="session_token", value=session_token)
 
-@app.post("/logout")
+@app.get("/logout")
 def logout(response: Response, session_token: str = Depends(check_cookie)):
-    if session_token is None:
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return app.message_unauthorized
-    response.status_code = status.HTTP_302_FOUND
-    response.headers["Location"] = "/"
-    app.sessions.pop(session_token)
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
+	response.status_code = status.HTTP_302_FOUND
+	response.headers["Location"] = "/"
+	app.sessions.pop(session_token)
 
 
 
@@ -79,7 +84,10 @@ def logout(response: Response, session_token: str = Depends(check_cookie)):
 
 
 @app.get("/method")
-def method_get():
+def method_get(response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
 	return {"method": "GET"}
 
 @app.put("/method")
@@ -95,13 +103,19 @@ def method_post():
 	return GivePostMethodResp(method="POST")
 
 @app.post("/patient", response_model=GiveMeSomethingResp)
-def receive_something(rq: GiveMeSomethingRq):
+def receive_something(rq: GiveMeSomethingRq, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
 	app.counter += 1
 	app.database[app.counter] = rq.dict()
 	return GiveMeSomethingResp(id=app.counter, patient=rq.dict())
 
 @app.get("/patient/{pk}")
-async def read_item(pk: int):
+async def read_item(pk: int, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
 	if pk not in app.database:
 		raise HTTPException(status_code=204, detail="no_content")
 	return app.database[pk]
