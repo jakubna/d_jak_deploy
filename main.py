@@ -46,8 +46,8 @@ def welcome():
 
 
 def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
-	correct_username = secrets.compare_digest(credentials.username, "admin")
-	correct_password = secrets.compare_digest(credentials.password, "admin")
+	correct_username = secrets.compare_digest(credentials.username, "trudnY")
+	correct_password = secrets.compare_digest(credentials.password, "PaC13Nt")
 	if not (correct_username and correct_password):
 		raise HTTPException(
 			status_code=status.HTTP_401_UNAUTHORIZED,
@@ -60,10 +60,9 @@ def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
 
 @app.post("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
+	response.status_code = status.HTTP_302_FOUND
 	response.headers["Location"] = "/welcome"
 	response.set_cookie(key="session_token", value=session_token)
-
-
 
 
 @app.get("/method")
