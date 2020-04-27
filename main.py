@@ -141,7 +141,7 @@ async def read_item(pk: int, response: Response, session_token: str = Depends(ch
 		return app.message_unauthorized
 	if pk not in app.database:
 		raise HTTPException(status_code=204, detail="no_content")
-	if len(app.database) != 0:
+	if len(app.database) > 0:
 		return app.database[pk]
 	response.status_code = status.HTTP_204_NO_CONTENT
 	
@@ -150,7 +150,7 @@ def receive_something(response: Response, session_token: str = Depends(check_coo
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return app.message_unauthorized
-	if len(app.database) != 0:
+	if len(app.database) > 0:
 		return app.database
 	response.status_code = status.HTTP_204_NO_CONTENT
 @app.delete("/patient/{pk}")
