@@ -202,5 +202,6 @@ def remove_patient(pid: str, response: Response, session_token: str = Depends(ch
     if session_token is None:
         response.status_code = status.HTTP_401_UNAUTHORIZED
         return MESSAGE_UNAUTHORIZED
-    app.patients.pop(pid, None)
+    if pid in app.patients:
+    	app.patients.pop(pid, None)
     response.status_code = status.HTTP_204_NO_CONTENT
