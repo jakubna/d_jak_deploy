@@ -64,6 +64,19 @@ def login(response: Response, session_token: str = Depends(login_check_cred)):
 	response.headers["Location"] = "/welcome"
 	response.set_cookie(key="session_token", value=session_token)
 
+@app.post("/logout")
+def logout(response: Response, session_token: str = Depends(check_cookie)):
+    if session_token is None:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return app.message_unauthorized
+    response.status_code = status.HTTP_302_FOUND
+    response.headers["Location"] = "/"
+    app.sessions.pop(session_token)
+
+
+
+
+
 
 @app.get("/method")
 def method_get():
