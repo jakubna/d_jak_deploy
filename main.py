@@ -12,7 +12,7 @@ from starlette.responses import RedirectResponse
 app = FastAPI()
 security = HTTPBasic()
 
-app.counter = 0
+app.counter = -1
 app.database = {}
 
 app.secret_key = "very constatn and random secret, best 64 characters"
@@ -129,8 +129,8 @@ def receive_something(rq: GiveMeSomethingRq, response: Response, session_token: 
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return app.message_unauthorized
-	app.database[app.counter] = rq.dict()
 	app.counter += 1
+	app.database[app.counter] = rq.dict()
 	response.status_code = status.HTTP_302_FOUND
 	response.headers["Location"] = f"/patient/{app.counter}"
 
@@ -141,16 +141,22 @@ async def read_item(pk: int, response: Response, session_token: str = Depends(ch
 		return app.message_unauthorized
 	if pk not in app.database:
 		raise HTTPException(status_code=204, detail="no_content")
-	return app.database[pk]
+	if len(app.database) != 0:
+		return app.database[pk]
+	response.status_code = status.HTTP_204_NO_CONTENT
+	
 @app.get("/patient")
 def receive_something(response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return app.message_unauthorized
-	return app.database
+	if len(app.database) != 0:
+		return app.database
+	response.status_code = status.HTTP_204_NO_CONTENT
 @app.delete("/patient/{pk}")
 def remove_patient(pk: int, response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return app.message_unauthorized
 	app.database.pop(pk, None)
+	response.status_code = status.HTTP_204_NO_CONTENT
