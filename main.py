@@ -22,7 +22,23 @@ app.message_unauthorized = "Log in to access this page."
 app.secret = "secret"
 app.tokens = []
 
+def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
+	correct_username = secrets.compare_digest(credentials.username, "trudnY")
+	correct_password = secrets.compare_digest(credentials.password, "PaC13Nt")
+	if not (correct_username and correct_password):
+		raise HTTPException(
+			status_code=status.HTTP_401_UNAUTHORIZED,
+			detail="Incorrect email or password",
+			headers={"WWW-Authenticate": "Basic"},
+		)
+	session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}", encoding='utf8')).hexdigest()
+	app.sessions[session_token]=credentials.username
+	return session_token
 
+def check_cookie(session_token: str = Cookie(None)):
+	if session_token not in app.sessions:
+		session_token = None
+	return session_token
 
 @app.get("/")
 def root():
@@ -41,27 +57,14 @@ class GiveMeSomethingResp(BaseModel):
 	patient: Dict
 
 @app.get("/welcome")
-def welcome():
+def welcome(response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
 	return "hi"
 
 
-def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
-	correct_username = secrets.compare_digest(credentials.username, "trudnY")
-	correct_password = secrets.compare_digest(credentials.password, "PaC13Nt")
-	if not (correct_username and correct_password):
-		raise HTTPException(
-			status_code=status.HTTP_401_UNAUTHORIZED,
-			detail="Incorrect email or password",
-			headers={"WWW-Authenticate": "Basic"},
-		)
-	session_token = sha256(bytes(f"{credentials.username}{credentials.password}{app.secret_key}", encoding='utf8')).hexdigest()
-	app.sessions[session_token]=credentials.username
-	return session_token
 
-def check_cookie(session_token: str = Cookie(None)):
-	if session_token not in app.sessions:
-		session_token = None
-	return session_token
 
 @app.get("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
