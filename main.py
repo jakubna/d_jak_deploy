@@ -7,6 +7,7 @@ from fastapi.security import HTTPBasic, HTTPBasicCredentials
 from hashlib import sha256
 from starlette.responses import RedirectResponse
 
+MESSAGE_UNAUTHORIZED = "Log in to access this page."
 
 
 app = FastAPI()
@@ -14,7 +15,8 @@ security = HTTPBasic()
 
 app.counter = -1
 app.database = {}
-
+app.patients={}
+app.next_patient_id=0
 app.secret_key = "very constatn and random secret, best 64 characters"
 app.users = {"trudnY": "PaC13Nt", "admin": "admin"}
 app.sessions={}
@@ -52,6 +54,9 @@ class GiveMeSomethingRq(BaseModel):
 	name: str
 	surname: str
 
+class PatientRq(BaseModel):
+    name: str
+    surname: str
 
 class GiveMeSomethingResp(BaseModel):
 	id: int
@@ -123,7 +128,7 @@ async def read_item(pk: int, response: Response, session_token: str = Depends(ch
 	if pk not in app.database:
 		raise HTTPException(status_code=204, detail="no_content")
 	return app.database[pk]
-'''
+
 @app.post("/patient")
 def receive_something(rq: GiveMeSomethingRq, response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
@@ -160,3 +165,42 @@ def remove_patient(pk: int, response: Response, session_token: str = Depends(che
 		return app.message_unauthorized
 	app.database.pop(pk, None)
 	response.status_code = status.HTTP_204_NO_CONTENT
+'''
+
+
+@app.post("/patient")
+def add_patient(response: Response, rq: PatientRq, session_token: str = Depends(check_cookie)):
+    if session_token is None:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return MESSAGE_UNAUTHORIZED
+    pid=f"id_{app.next_patient_id}"
+    app.patients[pid]=rq.dict()
+    response.status_code = status.HTTP_302_FOUND
+    response.headers["Location"] = f"/patient/{pid}"
+    app.next_patient_id+=1
+
+@app.get("/patient")
+def get_all_patients(response: Response, session_token: str = Depends(check_cookie)):
+    if session_token is None:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return MESSAGE_UNAUTHORIZED
+    if len(app.patients) != 0:
+        return app.patients
+    response.status_code = status.HTTP_204_NO_CONTENT
+
+@app.get("/patient/{pid}")
+def get_patient(pid: str, response: Response, session_token: str = Depends(check_cookie)):
+    if session_token is None:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return MESSAGE_UNAUTHORIZED
+    if pid in app.patients:
+        return app.patients[pid]
+    response.status_code = status.HTTP_204_NO_CONTENT
+
+@app.delete("/patient/{pid}")
+def remove_patient(pid: str, response: Response, session_token: str = Depends(check_cookie)):
+    if session_token is None:
+        response.status_code = status.HTTP_401_UNAUTHORIZED
+        return MESSAGE_UNAUTHORIZED
+    app.patients.pop(pid, None)
+    response.status_code = status.HTTP_204_NO_CONTENT
