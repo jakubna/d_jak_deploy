@@ -66,13 +66,13 @@ def welcome(response: Response, session_token: str = Depends(check_cookie)):
 
 
 
-@app.get("/login")
+@app.post("/login")
 def login(response: Response, session_token: str = Depends(login_check_cred)):
 	response.status_code = status.HTTP_302_FOUND
 	response.headers["Location"] = "/welcome"
 	response.set_cookie(key="session_token", value=session_token)
 
-@app.get("/logout")
+@app.post("/logout")
 def logout(response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
