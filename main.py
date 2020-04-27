@@ -50,7 +50,7 @@ class GivePostMethodResp(BaseModel):
 
 class GiveMeSomethingRq(BaseModel):
 	name: str
-	surename: str
+	surname: str
 
 
 class GiveMeSomethingResp(BaseModel):
@@ -105,7 +105,7 @@ def method_delete():
 @app.post("/method", response_model=GivePostMethodResp)
 def method_post():
 	return GivePostMethodResp(method="POST")
-
+'''
 @app.post("/patient", response_model=GiveMeSomethingResp)
 def receive_something(rq: GiveMeSomethingRq, response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
@@ -123,3 +123,34 @@ async def read_item(pk: int, response: Response, session_token: str = Depends(ch
 	if pk not in app.database:
 		raise HTTPException(status_code=204, detail="no_content")
 	return app.database[pk]
+'''
+@app.post("/patient")
+def receive_something(rq: GiveMeSomethingRq, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
+	app.counter += 1
+	app.database[app.counter] = rq.dict()
+	response.status_code = status.HTTP_302_FOUND
+	response.headers["Location"] = f"/patient/{app.counter}"
+
+@app.get("/patient/{pk}")
+async def read_item(pk: int, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
+	if pk not in app.database:
+		raise HTTPException(status_code=204, detail="no_content")
+	return app.database[pk]
+@app.get("/patient")
+def receive_something(response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
+	return app.database
+@app.delete("/patient/{pk}")
+def remove_patient(pk: int, response: Response, session_token: str = Depends(check_cookie)):
+	if session_token is None:
+		response.status_code = status.HTTP_401_UNAUTHORIZED
+		return app.message_unauthorized
+	app.database.pop(pk, None)
