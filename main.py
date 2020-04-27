@@ -1,6 +1,6 @@
 from typing import Dict
 import secrets
-from fastapi import FastAPI, HTTPException, Response, Cookie, Depends, status
+from fastapi import FastAPI, HTTPException, Response, Cookie, Depends, status, Request
 from fastapi.templating import Jinja2Templates
 from pydantic import BaseModel
 from fastapi.security import HTTPBasic, HTTPBasicCredentials
@@ -21,6 +21,7 @@ app.sessions={}
 app.message_unauthorized = "Log in to access this page."
 app.secret = "secret"
 app.tokens = []
+templates = Jinja2Templates(directory="templates")
 
 def login_check_cred(credentials: HTTPBasicCredentials = Depends(security)):
 	correct_username = secrets.compare_digest(credentials.username, "trudnY")
@@ -57,11 +58,11 @@ class GiveMeSomethingResp(BaseModel):
 	patient: Dict
 
 @app.get("/welcome")
-def welcome(response: Response, session_token: str = Depends(check_cookie)):
+def welcome(request: Request, response: Response, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return app.message_unauthorized
-	return "hi"
+	return templates.TemplateResponse("init.html", {"request": request, "user": app.sessions[session_token]})
 
 
 
