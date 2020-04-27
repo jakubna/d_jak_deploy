@@ -12,7 +12,7 @@ from starlette.responses import RedirectResponse
 app = FastAPI()
 security = HTTPBasic()
 
-app.counter = -1
+app.counter = 0
 app.database = {}
 
 app.secret_key = "very constatn and random secret, best 64 characters"
@@ -129,8 +129,8 @@ def receive_something(rq: GiveMeSomethingRq, response: Response, session_token: 
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
 		return app.message_unauthorized
-	app.counter += 1
 	app.database[app.counter] = rq.dict()
+	app.counter += 1
 	response.status_code = status.HTTP_302_FOUND
 	response.headers["Location"] = f"/patient/{app.counter}"
 
