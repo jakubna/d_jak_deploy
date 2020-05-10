@@ -17,6 +17,30 @@ class AlbumResp(BaseModel):
 	Title: str
 	ArtistId: int
 
+class Customer(BaseModel):
+	company: str = None
+	address: str = None
+	city: str = None
+	state: str = None
+	country: str = None
+	postalcode: str = None
+	fax: str = None
+
+class AlbumResp(BaseModel):
+	CustomerId: int
+	FirstName: str
+	LastName: str
+	Company: str
+	Address: str
+	City: str
+	State: str
+	Country: str
+	PostalCode: str
+	Phone: str
+	Fax: str
+	Email: str
+	SupportRepId: int
+
 @app.on_event("startup")
 async def startup():
 	app.db_connection = sqlite3.connect('chinook.db')
@@ -84,6 +108,41 @@ async def read_albums(response: Response, album_id: int):
 		response.status_code = status.HTTP_404_NOT_FOUND
 		return {"detail":{"error":"Album with that ID does not exist."}}
 	return album
+
+@app.put("/customers/{customer_id}")
+async def read_customers(response: Response, customer_id: int, customer: Customer):
+	if_customer = app.db_connection.execute("SELECT CustomerId FROM customers WHERE CustomerId = ?",
+										(customer_id,)).fetchone()
+	if not if_customer:
+		response.status_code = status.HTTP_404_NOT_FOUND
+		return {"detail":{"error":"Artist with this ID does not exist."}}
+	if customer.company:
+		cursor = app.db_connection.execute("UPDATE customers SET company = ? WHERE CustomerId = ?",
+									   (customer.company, customer_id))
+	if customer.address:
+		cursor = app.db_connection.execute("UPDATE customers SET address = ? WHERE CustomerId = ?",
+									   (customer.address, customer_id))
+	if customer.city:
+		cursor = app.db_connection.execute("UPDATE customers SET city = ? WHERE CustomerId = ?",
+									   (customer.city, customer_id))
+	if customer.state:
+		cursor = app.db_connection.execute("UPDATE customers SET state = ? WHERE CustomerId = ?",
+									   (customer.state, customer_id))
+	if customer.country:
+		cursor = app.db_connection.execute("UPDATE customers SET country = ? WHERE CustomerId = ?",
+									   (customer.country, customer_id))
+	if customer.postalcode:
+		cursor = app.db_connection.execute("UPDATE customers SET postalcode = ? WHERE CustomerId = ?",
+									   (customer.postalcode, customer_id))
+	if customer.fax:
+		cursor = app.db_connection.execute("UPDATE customers SET fax = ? WHERE CustomerId = ?",
+								   (customer.fax, customer_id))
+	app.db_connection.commit()
+	app.db_connection.row_factory = sqlite3.Row
+	updated_customer = app.db_connection.execute("SELECT * FROM customers WHERE CustomerId = ?", (customer_id,)).fetchone()
+	return updated_customer
+
+
 
 '''
 
