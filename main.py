@@ -142,7 +142,20 @@ async def read_customers(response: Response, customer_id: int, customer: Custome
 	updated_customer = app.db_connection.execute("SELECT * FROM customers WHERE CustomerId = ?", (customer_id,)).fetchone()
 	return updated_customer
 
+@app.get("/sales")
+async def read_sales(response: Response, category: str):
+	if category == "customers":
+		app.db_connection.row_factory = sqlite3.Row
+		cursor = app.db_connection.execute("SELECT invoices.CustomerId AS CustomerId, Email, Phone, ROUND(SUM(Total), 2) AS Sum\
+			FROM invoices JOIN customers ON invoices.CustomerId=customers.CustomerId GROUP BY invoices.CustomerId\
+			ORDER BY Sum DESC, invoices.CustomerId")
+		stat = cursor.fetchall()
+		return stat
+	else:
+		response.status_code = status.HTTP_404_NOT_FOUND
+		return {"detail":{"error":"Unsupported category!"}}
 
+	
 
 '''
 
