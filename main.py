@@ -57,7 +57,7 @@ async def read_tracks(response: Response, composer_name: str = 'Angus Young, Mal
 
 @app.post("/albums")
 async def read_albums(response: Response, rq: AlbumRq):
-	app.db_connection.row_factory = lambda cursor, x: x[0]
+	app.db_connection.row_factory = sqlite3.Row
 	artists = app.db_connection.execute(
 		"SELECT Name FROM artists WHERE Artistid = ?",
 		(rq.artist_id, )).fetchone()
