@@ -34,11 +34,10 @@ async def read_tracks(composer_name: str = 'Angus Young, Malcolm Young, Brian Jo
 	tracks = app.db_connection.execute(
 		"SELECT Name FROM tracks WHERE Composer = ? ORDER BY Name",
 		(composer_name, )).fetchall()
-	data = [x['Name'] for x in tracks]
-	if len(data) == 0:
+	if len(tracks) == 0:
 		response.status_code = status.HTTP_404_NOT_FOUND
 		return {"detail":{"error":"Can't find any songs of that composer."}}
-
+	data = [x['Name'] for x in tracks]
 	return data
 
 
