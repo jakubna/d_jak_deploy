@@ -151,7 +151,7 @@ async def read_sales(response: Response, category: str):
 			ORDER BY Sum DESC, invoices.CustomerId")
 		stat = cursor.fetchall()
 		return stat
-	else if category == "genres":
+	elif category == "genres":
 		app.db_connection.row_factory = sqlite3.Row
 		cursor = app.db_connection.execute("SELECT genres.Name, ROUND(SUM(Quantity)) AS Sum\
 			FROM invoice_items JOIN tracks ON invoice_items.TrackId=tracks.TrackId\
