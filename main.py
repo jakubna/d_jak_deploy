@@ -59,28 +59,21 @@ async def read_tracks(response: Response, composer_name: str = 'Angus Young, Mal
 async def read_albums(response: Response, rq: AlbumRq):
 	app.db_connection.row_factory = sqlite3.Row
 	artists = app.db_connection.execute(
-		"SELECT Name FROM artists WHERE Artistid = ?",
+		"SELECT ArtistId FROM artists WHERE Artistid = ?",
 		(rq.artist_id, )).fetchone()
-	if artists is None:
+	if not artists:
 		response.status_code = status.HTTP_404_NOT_FOUND
 		return {"detail":{"error":"Artist with this ID does not exist."}}
 	else:
 		cursor = app.db_connection.execute(
 		"INSERT INTO albums (Title, ArtistId) VALUES (?, ?)", (rq.title, rq.artist_id, ))
 		app.db_connection.commit()
+		new_album_id = cursor.lastrowid
+		app.db_connection.row_factory = sqlite3.Row
+		album = app.db_connection.execute("SELECT * FROM albums WHERE AlbumId = ?", (new_album_id,)).fetchone()
 		response.status_code = status.HTTP_201_CREATED
-		return {"AlbumId": cursor.lastrowid, "Title": rq.title, "ArtistId": rq.artist_id}
+		return album
 
-@app.get("/albums/{album_id}")
-async def read_albums(response: Response, album_id: int):
-	app.db_connection.row_factory = sqlite3.Row
-	cursor =  app.db_connection.execute("SELECT * FROM albums WHERE AlbumId = ?",
-		(album_id, ))
-	album = cursor.fetchone()
-	if album is None:
-		response.status_code = status.HTTP_404_NOT_FOUND
-		return {"detail":{"error":"Album with that ID does not exist."}}
-	return album
 
 '''
 
