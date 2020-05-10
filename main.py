@@ -1,4 +1,10 @@
 import sqlite3
+from typing import Dict
+from fastapi import FastAPI, HTTPException, Response, Depends, status, Request
+from pydantic import BaseModel
+from fastapi.security import HTTPBasic, HTTPBasicCredentials
+from hashlib import sha256
+from starlette.responses import RedirectResponse
 from fastapi import FastAPI
 
 app = FastAPI()
@@ -29,7 +35,7 @@ async def read_tracks(page: int = 0, per_page: int = 10):
 	return data
 
 @app.get("/tracks/composers")
-async def read_tracks(composer_name: str = 'Angus Young, Malcolm Young, Brian Johnson'):
+async def read_tracks(response: Response, composer_name: str = 'Angus Young, Malcolm Young, Brian Johnson'):
 	app.db_connection.row_factory = sqlite3.Row
 	tracks = app.db_connection.execute(
 		"SELECT Name FROM tracks WHERE Composer = ? ORDER BY Name",
@@ -37,8 +43,9 @@ async def read_tracks(composer_name: str = 'Angus Young, Malcolm Young, Brian Jo
 	if len(tracks) == 0:
 		response.status_code = status.HTTP_404_NOT_FOUND
 		return {"detail":{"error":"Can't find any songs of that composer."}}
-	data = [x['Name'] for x in tracks]
-	return data
+	else:	
+		data = [x['Name'] for x in tracks]
+		return data
 
 
 '''
