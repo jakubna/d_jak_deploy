@@ -28,6 +28,18 @@ async def read_tracks(page: int = 0, per_page: int = 10):
 
 	return data
 
+@app.get("/tracks/composers")
+async def read_tracks(composer_name: str = 'Angus Young, Malcolm Young, Brian Johnson'):
+	app.db_connection.row_factory = sqlite3.Row
+	tracks = app.db_connection.execute(
+		"SELECT Name FROM tracks WHERE Composer = ? ORDER BY Name",
+		(composer_name, )).fetchall()
+	data = [x['Name'] for x in tracks]
+	if len(data) == 0:
+		response.status_code = status.HTTP_404_NOT_FOUND
+		return {"detail":{"error":"Can't find any songs of that composer."}}
+
+	return data
 
 
 '''
