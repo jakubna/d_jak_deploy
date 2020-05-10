@@ -151,6 +151,14 @@ async def read_sales(response: Response, category: str):
 			ORDER BY Sum DESC, invoices.CustomerId")
 		stat = cursor.fetchall()
 		return stat
+	else if category == "genres":
+		app.db_connection.row_factory = sqlite3.Row
+		cursor = app.db_connection.execute("SELECT genres.Name, ROUND(SUM(Quantity)) AS Sum\
+			FROM invoice_items JOIN tracks ON invoice_items.TrackId=tracks.TrackId\
+			JOIN genres ON tracks.GenreId = genres.GenreId\
+			GROUP BY tracks.GenreId ORDER BY Sum DESC, genres.Name")
+		stat = cursor.fetchall()
+		return stat
 	else:
 		response.status_code = status.HTTP_404_NOT_FOUND
 		return {"detail":{"error":"Unsupported category!"}}
