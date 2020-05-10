@@ -74,6 +74,16 @@ async def read_albums(response: Response, rq: AlbumRq):
 		response.status_code = status.HTTP_201_CREATED
 		return album
 
+@app.get("/albums/{album_id}")
+async def read_albums(response: Response, album_id: int):
+	app.db_connection.row_factory = sqlite3.Row
+	cursor =  app.db_connection.execute("SELECT * FROM albums WHERE AlbumId = ?",
+		(album_id, ))
+	album = cursor.fetchone()
+	if album is None:
+		response.status_code = status.HTTP_404_NOT_FOUND
+		return {"detail":{"error":"Album with that ID does not exist."}}
+	return album
 
 '''
 
