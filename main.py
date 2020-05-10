@@ -9,6 +9,14 @@ from fastapi import FastAPI
 
 app = FastAPI()
 
+class AlbumRq(BaseModel):
+	title: str
+	artist_id: int
+class AlbumResp(BaseModel):
+	AlbumId: int
+	Title: str
+	ArtistId: int
+
 @app.on_event("startup")
 async def startup():
 	app.db_connection = sqlite3.connect('chinook.db')
@@ -47,18 +55,46 @@ async def read_tracks(response: Response, composer_name: str = 'Angus Young, Mal
 		data = [x['Name'] for x in tracks]
 		return data
 
+@app.post("/albums")
+async def read_albums(response: Response, rq: AlbumRq):
+	app.db_connection.row_factory = lambda cursor, x: x[0]
+	artists = app.db_connection.execute(
+		"SELECT Name FROM artists WHERE Artistid = ?",
+		(rq.artist_id, )).fetchone()
+	if artists is None:
+		response.status_code = status.HTTP_404_NOT_FOUND
+		return {"detail":{"error":"Artist with this ID does not exist."}}
+	else:
+		cursor = app.db_connection.execute(
+		"INSERT INTO albums (Title, ArtistId) VALUES (?, ?)", (rq.title, rq.artist_id, ))
+		app.db_connection.commit()
+		response.status_code = status.HTTP_201_CREATED
+		return {"AlbumId": cursor.lastrowid, "Title": rq.title, "ArtistId": rq.artist_id}
+
+@app.get("/albums/{album_id}")
+async def read_albums(response: Response, album_id: int):
+	app.db_connection.row_factory = sqlite3.Row
+	cursor =  app.db_connection.execute("SELECT * FROM albums WHERE AlbumId = ?",
+		(album_id, ))
+	album = cursor.fetchone()
+	if album is None:
+		response.status_code = status.HTTP_404_NOT_FOUND
+		return {"detail":{"error":"Album with that ID does not exist."}}
+	return album
 
 '''
 
 
-@app.get("/patient/{pk}")
-async def read_item(pk: int, response: Response, session_token: str = Depends(check_cookie)):
+@app.post("/patient")
+def add_patient(response: Response, rq: PatientRq, session_token: str = Depends(check_cookie)):
 	if session_token is None:
 		response.status_code = status.HTTP_401_UNAUTHORIZED
-		return app.message_unauthorized
-	if pk not in app.database:
-		raise HTTPException(status_code=204, detail="no_content")
-	return app.database[pk]
+		return MESSAGE_UNAUTHORIZED
+	pid=f"id_{app.next_patient_id}"
+	app.patients[pid]=rq.dict()
+	response.status_code = status.HTTP_302_FOUND
+	response.headers["Location"] = f"/patient/{pid}"
+	app.next_patient_id+=1
 
 
 
